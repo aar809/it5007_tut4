@@ -5,32 +5,21 @@ function jsonDateReviver(key, value) {
   return value;
 }
 
-class IssueFilter extends React.Component {
-  render() {
-    return (
-      <div>This is a placeholder for the issue filter.</div>
-    );
-  }
-}
-
-function IssueRow(props) {
+function TravellerRow(props) {
   const issue = props.issue;
   return (
     <tr>
       <td>{issue.id}</td>
-      <td>{issue.status}</td>
       <td>{issue.owner}</td>
+      <td>{issue.phoneNumber}</td>
       <td>{issue.created.toDateString()}</td>
-      <td>{issue.effort}</td>
-      <td>{issue.due ? issue.due.toDateString() : ''}</td>
-      <td>{issue.title}</td>
     </tr>
   );
 }
 
-function IssueTable(props) {
-  const issueRows = props.issues.map(issue =>
-    <IssueRow key={issue.id} issue={issue} />
+function TravellerTable(props) {
+  const rows = props.issues.map(issue =>
+    <TravellerRow key={issue.id} issue={issue} />
   );
 
   return (
@@ -38,16 +27,13 @@ function IssueTable(props) {
       <thead>
         <tr>
           <th>ID</th>
-          <th>Status</th>
-          <th>Owner</th>
+          <th>Name</th>
+          <th>Phone Number</th>
           <th>Created</th>
-          <th>Effort</th>
-          <th>Due Date</th>
-          <th>Title</th>
         </tr>
       </thead>
       <tbody>
-        {issueRows}
+        {rows}
       </tbody>
     </table>
   );
@@ -63,23 +49,60 @@ class IssueAdd extends React.Component {
     e.preventDefault();
     const form = document.forms.issueAdd;
     const issue = {
-      owner: form.owner.value, title: form.title.value,
-      due: new Date(new Date().getTime() + 1000*60*60*24*10),
+      owner: form.owner.value, phoneNumber: form.phoneNumber.value,
     }
     this.props.createIssue(issue);
-    form.owner.value = ""; form.title.value = "";
+    form.owner.value = ""; form.phoneNumber.value = "";
   }
 
   render() {
     return (
+      <div className="form">
       <form name="issueAdd" onSubmit={this.handleSubmit}>
-        <input type="text" name="owner" placeholder="Owner" />
-        <input type="text" name="title" placeholder="Title" />
-        <button>Add</button>
+        <label htmlFor="owner"><b>Add Traveller: </b></label> <br/>        
+        <input type="text" name="owner" placeholder="Name" />&nbsp;
+        <input type="text" name="phoneNumber" placeholder="Phone Number" />
+        &nbsp;&nbsp;
+        <button className="button">Add</button>
       </form>
+      </div>
     );
   }
 }
+
+class DeleteTraveller extends React.Component {
+  constructor() {
+    super();
+    this.handleSubmit = this.handleSubmit.bind(this);
+  }
+
+  handleSubmit(e) {
+    e.preventDefault();
+    const form = document.forms.travellerDeleteForm;
+    const traveller = {
+      id: form.id.value
+      // owner: form.owner.value, phoneNumber: form.phoneNumber.value,
+      // due: new Date(new Date().getTime() + 1000*60*60*24*10),
+    }
+    this.props.deleteTravellerFunction(traveller);
+    form.id.value = "";
+  }
+
+  render() {
+    return (
+      <div>
+      <form name="travellerDeleteForm" onSubmit={this.handleSubmit}>
+        <label htmlFor="id"><b>Delete Traveller: </b></label> <br/>
+        <input type="text" name="id" placeholder="Ticket ID" id="id" />
+        &nbsp;&nbsp;
+        <button className="button">Delete</button>
+      </form>
+      </div>
+    );
+  }
+}
+
+
 
 async function graphQLFetch(query, variables = {}) {
   try {
@@ -105,12 +128,90 @@ async function graphQLFetch(query, variables = {}) {
     alert(`Error in sending data to server: ${e.message}`);
   }
 }
+/*
+ * Code for adding new component: BlackList
+ */
 
-class IssueList extends React.Component {
+class BlackList extends React.Component {
+  constructor() {
+    super();
+    this.handleSubmit = this.handleSubmit.bind(this);
+  }
+
+  async handleSubmit(e) {
+    e.preventDefault();
+    const form = document.forms.BlackList;
+    /*const issue = {
+      owner: form.owner.value, title: form.title.value,
+      due: new Date(new Date().getTime() + 1000*60*60*24*10),
+    }*/
+    const name = form.owner.value;
+    /*
+     * To write the GraphQL query
+     */
+
+    const query = `mutation mycreateBlackList($name: String!) {
+      createBlackList(name: $name)
+    }`;
+
+    const data = await graphQLFetch(query, { name });
+    form.owner.value = ""; 
+    // form.title.value = "";
+  }
+  render() {
+    return (
+      <form name="BlackList" onSubmit={this.handleSubmit}>
+        <label htmlFor="owner"><b>Blacklist: </b></label> <br/>
+        <input type="text" name="owner" placeholder="Owner" />
+        &nbsp;&nbsp;
+        <button className="button">Add</button>
+      </form>
+    );
+  }
+}
+
+class Registration extends React.Component {
+    constructor() {
+      super();
+      this.handleSubmit = this.handleSubmit.bind(this);
+    }
+  
+    async handleSubmit(e) {
+      e.preventDefault();
+      const form = document.forms.registration;
+      const user = {
+        username: form.username.value, 
+        password: form.password.value,
+      }
+      // this.props.createIssue(issue);
+      //To Do: Make a call to GraphQL to addUser
+      const mt = `mutation mymutationforaddinguser($user: User!) {
+        addUser(user: $user)
+      }`;
+  
+      const data = await graphQLFetch(mt, { user });
+      form.username.value = ""; form.password.value = "";
+    }
+  
+    render() {
+      return (
+        <form name="registration" onSubmit={this.handleSubmit}>
+          <input type="text" name="username" placeholder="Username" />
+          <input type="text" name="password" placeholder="Password" />
+          &nbsp;&nbsp;
+          <button className="button">Register</button>
+        </form>
+      );
+    }
+  }
+
+
+class TravellerList extends React.Component {
   constructor() {
     super();
     this.state = { issues: [] };
     this.createIssue = this.createIssue.bind(this);
+    this.deleteTravellerFunction = this.deleteTravellerFunction.bind(this);
   }
 
   componentDidMount() {
@@ -120,8 +221,8 @@ class IssueList extends React.Component {
   async loadData() {
     const query = `query {
       issueList {
-        id title status owner
-        created effort due
+        id phoneNumber owner
+        created
       }
     }`;
 
@@ -139,25 +240,45 @@ class IssueList extends React.Component {
     }`;
 
     const data = await graphQLFetch(query, { issue });
+    console.log(data)
     if (data) {
+      console.log(this)
       this.loadData();
     }
   }
 
+  async deleteTravellerFunction(traveller) {
+    const query = `mutation travellerDelete($traveller: TravellerInputs!) {
+      travellerDelete(traveller: $traveller)
+    }`;
+
+    const data = await graphQLFetch(query, { traveller });
+    console.log(data)
+    if (data) {
+      this.loadData();
+    }
+  }  
+
   render() {
     return (
       <React.Fragment>
-        <h1>Issue Tracker</h1>
-        <IssueFilter />
-        <hr />
-        <IssueTable issues={this.state.issues} />
-        <hr />
+        <h1 id='top_banner'>SINGAPORE HIGH-SPEED INTERCONTINENTAL RAILWAY</h1>
+
+        <br />
+        <center><h2>Train Ticket Booking System</h2></center>
+        <br/>
+        <TravellerTable issues={this.state.issues} />
+        <br/>
         <IssueAdd createIssue={this.createIssue} />
+	      <br/>
+        <DeleteTraveller deleteTravellerFunction={this.deleteTravellerFunction}/>
+        <br/>
+	      <BlackList/>
       </React.Fragment>
     );
   }
 }
 
-const element = <IssueList />;
+const element = <TravellerList />;
 
 ReactDOM.render(element, document.getElementById('contents'));

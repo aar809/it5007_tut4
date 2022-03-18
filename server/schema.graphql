@@ -10,23 +10,45 @@ enum StatusType {
 type Issue {
   _id: ID!
   id: Int!
-  title: String!
-  status: StatusType!
+  title: String
+  phoneNumber: String
   owner: String
-  effort: Int
   created: GraphQLDate!
-  due: GraphQLDate
 }
 
 "Toned down Issue, used as inputs, without server generated values."
 input IssueInputs {
-  title: String!
+  title: String
+  phoneNumber: String
   "Optional, if not supplied, will be set to 'New'"
   status: StatusType = New
   owner: String
   effort: Int
   due: GraphQLDate
 }
+
+input User{
+  _id: ID
+  id: Int
+  username: String!
+  password: String!
+}
+
+
+type Traveller {
+  _id: ID!
+  id: Int!
+  name: String
+  phoneNumber: String
+  created: GraphQLDate!
+}
+
+input TravellerInputs {
+  id: Int!
+  travellerName: String
+  phoneNumber: Int
+}
+
 
 ##### Top level declarations
 
@@ -38,4 +60,8 @@ type Query {
 type Mutation {
   setAboutMessage(message: String!): String
   issueAdd(issue: IssueInputs!): Issue!
+  createBlackList(name: String!): String
+  travellerDelete(traveller:TravellerInputs!): String
+  addUser(user: User!): String
+
 }

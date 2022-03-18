@@ -43,12 +43,42 @@ const resolvers = {
   Mutation: {
     setAboutMessage,
     issueAdd,
+    createBlackList,
+    travellerDelete,
+    addUser,
   },
   GraphQLDate,
 };
 
+async function getNextCount(name) {
+  const result = await db.collection('usercnt').findOneAndUpdate(
+    { _id: name },
+    { $inc: { current: 1 } },
+    { returnOriginal: false },
+  );
+  return result.value.current;
+}
+
+async function addUser(_, {user}) {
+  const latestcount = await getNextCount('count');
+  user.id = latestcount;
+  const returnval = await db.collection('userinfo').insertOne(user);
+  // return "Success";
+}
+
 function setAboutMessage(_, { message }) {
   return aboutMessage = message;
+}
+
+async function createBlackList(_, {name})
+{
+	/*Logic to add blacklist name to DB
+	 */
+	console.log("**Entering BlackList function**");
+	//const result = await db.collections('whitelist').insertOne(name);
+  result = await db.collection('blacklist').insertOne({owner: name});
+
+	return "Done";
 }
 
 async function issueList() {
@@ -67,7 +97,7 @@ async function getNextSequence(name) {
 
 function issueValidate(issue) {
   const errors = [];
-  if (issue.title.length < 3) {
+  if (issue.phoneNumber.length < 3) {
     errors.push('Field "title" must be at least 3 characters long.');
   }
   if (issue.status === 'Assigned' && !issue.owner) {
@@ -79,13 +109,41 @@ function issueValidate(issue) {
 }
 
 async function issueAdd(_, { issue }) {
-  issueValidate(issue);
+  // issueValidate(issue)
+  var savedIssue;
+  // issueValidate(issue);
   issue.created = new Date();
   issue.id = await getNextSequence('issues');
-
+  
+  /*
+   * Code to check in the whitelist
+   */
+  const hits = await db.collection('blacklist').find({owner: issue.owner}).count();
+  if (hits===0) {
   const result = await db.collection('issues').insertOne(issue);
-  const savedIssue = await db.collection('issues')
+  savedIssue = await db.collection('issues')
     .findOne({ _id: result.insertedId });
+  }
+  return savedIssue;
+}
+
+
+async function travellerDelete(_, { traveller }) {
+  var savedIssue;
+  // issueValidate(issue);
+  // issue.created = new Date();
+  // issue.id = await getNextSequence('issues');
+  
+  /*
+   * Code to check in the whitelist
+   */
+  // const hits = await db.collection('whitelist').find({owner: issue.owner}).count();
+  // if (hits>0) {
+  const result = await db.collection('issues').deleteOne({id: traveller.id});
+  // db.employees.deleteOne({id:4})
+  savedIssue = await db.collection('issues')
+    .findOne({ _id: result.insertedId });
+  // }
   return savedIssue;
 }
 
